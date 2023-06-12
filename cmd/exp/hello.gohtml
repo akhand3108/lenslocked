@@ -1,0 +1,25 @@
+<h1> User Information </h1>
+<p> Name: {{.Name}} </p>
+<p>Age: {{.Age}} </p>
+
+{{if .Relatives}}
+<p>Relatives are</p>
+<ul>
+  {{range $key, $value := .Relatives}}
+  <li>{{$key}} : {{$value}}</li>
+  {{end}}
+</ul>
+{{else}}
+<p>NO relatives found</p>
+{{end}}
+<p>Friends are</p>
+<ul>
+  {{range .Friends}}
+    {{if eq .  "Steve"}}
+      <li><strong>{{.}}</strong></li>
+    {{else}}
+      <li>{{.}}</li>
+    {{end}}
+
+  {{end}}
+</ul>
