@@ -89,7 +89,8 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setCookie(w, CookieSession, session.Token)
-	fmt.Fprintf(w, "User authenticated: %+v", user)
+	// fmt.Fprintf(w, "User authenticated: %+v", user)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
