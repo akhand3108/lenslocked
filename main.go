@@ -25,6 +25,7 @@ type config struct {
 		Secure bool
 	}
 	Server struct {
+		URL     string
 		Address string
 	}
 }
@@ -36,7 +37,19 @@ func loadEnvConfig() (config, error) {
 		return cfg, err
 	}
 
-	cfg.PSQL = models.DefaultPostgresConfig()
+	//Get the render URL
+
+	// Create the PostgresConfig struct.
+
+	cfg.PSQL = models.PostgresConfig{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Database: os.Getenv("DB_DATABASE"),
+		SSLMode:  os.Getenv("DB_SSLMODE"),
+	}
+	// cfg.PSQL = dbConfig
 	cfg.SMTP.Host = os.Getenv("SMTP_HOST")
 	portStr := os.Getenv("SMTP_PORT")
 	cfg.SMTP.Port, err = strconv.Atoi(portStr)
@@ -46,10 +59,12 @@ func loadEnvConfig() (config, error) {
 	cfg.SMTP.Username = os.Getenv("SMTP_USERNAME")
 	cfg.SMTP.Password = os.Getenv("SMTP_PASSWORD")
 
-	cfg.CSRF.Key = "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	cfg.CSRF.Key = os.Getenv("CSRF_KEY")
 	cfg.CSRF.Secure = false
 
-	cfg.Server.Address = ":3000"
+	cfg.Server.Address = os.Getenv("SERVER_ADDRESS")
+	cfg.Server.URL = os.Getenv("RENDER_URL")
+	fmt.Println(cfg.Server.URL, "here")
 	return cfg, nil
 }
 
@@ -171,7 +186,7 @@ func main() {
 	})
 
 	// Start the server
-	fmt.Println("Starting the server on :3000...")
+	fmt.Printf("Starting the server on %v... \n", cfg.Server.Address)
 	err = http.ListenAndServe(cfg.Server.Address, r)
 	if err != nil {
 		panic(err)
