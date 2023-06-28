@@ -161,6 +161,10 @@ func main() {
 	r.Get("/reset-pw", usersC.ResetPassword)
 	r.Post("/reset-pw", usersC.ProcessResetPassword)
 
+	r.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(r.URL.Hostname()))
+	})
+
 	r.Route("/users/me", func(r chi.Router) {
 		r.Use(umw.RequireUser)
 		r.Get("/", usersC.CurrentUser)
