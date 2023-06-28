@@ -83,6 +83,10 @@ func main() {
 	}
 	emailService := models.NewEmailService(cfg.SMTP)
 
+	galleryService := &models.GalleryService{
+		DB: db,
+	}
+
 	// Setup the Middlewares
 	umw := controllers.UserMiddleware{
 		SessionService: sessionService,
@@ -92,6 +96,7 @@ func main() {
 		[]byte(cfg.CSRF.Key),
 		// TODO: Fix this before deploying
 		csrf.Secure(cfg.CSRF.Secure),
+		csrf.Path("/"),
 	)
 
 	// Setup the Controllers
@@ -100,6 +105,10 @@ func main() {
 		SessionService:       sessionService,
 		PasswordResetService: pwResetService,
 		EmailService:         emailService,
+	}
+
+	galleryC := controllers.Galleries{
+		GalleryService: galleryService,
 	}
 
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
@@ -111,6 +120,10 @@ func main() {
 		templates.FS, "check-your-email.gohtml", "tailwind.gohtml"))
 	usersC.Templates.ResetPassword = views.Must(views.ParseFS(
 		templates.FS, "reset-pw.gohtml", "tailwind.gohtml"))
+	galleryC.Templates.New = views.Must(views.ParseFS(templates.FS, "galleries/new.gohtml", "tailwind.gohtml"))
+	galleryC.Templates.Edit = views.Must(views.ParseFS(templates.FS, "galleries/edit.gohtml", "tailwind.gohtml"))
+	galleryC.Templates.Index = views.Must(views.ParseFS(templates.FS, "galleries/index.gohtml", "tailwind.gohtml"))
+	galleryC.Templates.Show = views.Must(views.ParseFS(templates.FS, "galleries/show.gohtml", "tailwind.gohtml"))
 
 	// Setup Router and Routes
 	r := chi.NewRouter()
@@ -130,12 +143,28 @@ func main() {
 	r.Post("/signout", usersC.ProcessSignOut)
 	r.Get("/forgot-pw", usersC.ForgotPassword)
 	r.Post("/forgot-pw", usersC.ProcessForgotPassword)
-
 	r.Get("/reset-pw", usersC.ResetPassword)
 	r.Post("/reset-pw", usersC.ProcessResetPassword)
+
 	r.Route("/users/me", func(r chi.Router) {
 		r.Use(umw.RequireUser)
 		r.Get("/", usersC.CurrentUser)
+	})
+
+	r.Route("/galleries", func(r chi.Router) {
+		r.Get("/{id}", galleryC.Show)
+		r.Get("/{id}/images/{filename}", galleryC.Image)
+		r.Group(func(r chi.Router) {
+			r.Use(umw.RequireUser)
+			r.Get("/", galleryC.Index)
+			r.Get("/new", galleryC.New)
+			r.Post("/", galleryC.Create)
+			r.Get("/{id}/edit", galleryC.Edit)
+			r.Post("/{id}", galleryC.Update)
+			r.Post("/{id}/delete", galleryC.Delete)
+			r.Post("/{id}/images", galleryC.UploadImage)
+			r.Post("/{id}/images/{filename}/delete", galleryC.DeleteImage)
+		})
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page Not Found", http.StatusNotFound)
