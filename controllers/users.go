@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/joncalhoun/lenslocked/context"
 	"github.com/joncalhoun/lenslocked/errors"
@@ -140,7 +141,7 @@ func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
 	vals := url.Values{
 		"token": {pwReset.Token},
 	}
-	resetUrl := "https::www.lenslocked.com/reset-pw?" + vals.Encode()
+	resetUrl := os.Getenv("RENDER_EXTERNAL_URL") + "/reset-pw?" + vals.Encode()
 	err = u.EmailService.ForgotPassword(data.Email, resetUrl)
 	if err != nil {
 		fmt.Println(err)
